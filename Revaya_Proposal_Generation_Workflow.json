@@ -1,0 +1,1127 @@
+{
+  "name": "Revaya - Proposal Generation n8n Claude Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "revaya-lead-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "2c8f024c-d5d2-40c7-9435-95e45177de46",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        208
+      ],
+      "webhookId": "winnicki-lead-intake"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "lead-id",
+              "name": "lead_id",
+              "value": "={{ 'LEAD-' + $now.format('YYYYMMDDHHmmss') + '-' + Math.random().toString(36).substr(2, 6).toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "research-date",
+              "name": "research_date",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "08247f09-63f1-4839-a562-349a70ebbf01",
+      "name": "Generate Lead ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a B2B research specialist for Revaya, your long-term growth partner. We don't do one-off projects. We build the foundation, then stay to optimize, maintain, and expand as your business evolves.\\n\\nResearch the following company and provide a comprehensive intelligence brief:\\n\\n**Company Name:** {{ $json.company_name }}\\n**Website:** {{ $json.website }}\\n**Industry Context:** {{ $json.interested_in }}\\n\\nYour task:\\n1. Analyze their website and online presence\\n2. Identify their market position and business model\\n3. Find recent news or announcements\\n4. Assess company size and stage (startup, growth, enterprise)\\n5. Identify key decision makers if possible\\n6. Note any technology stack or platforms they currently use\\n\\n**Company Information:**\\n- Name: Revaya\\n- Services: Website Design and Development, E-commerce, SEO, Voice AI, Automation\\n- Platforms: Wix, Shopify, Webflow, Squarespace, WordPress\\n\\nOutput format:\\n## Company Intelligence Brief\\n\\n**Company Overview:**\\n[2-3 sentences about the company]\\n\\n**Business Model:**\\n[How they make money, who they serve]\\n\\n**Market Position:**\\n[Their competitive standing, niche, unique value]\\n\\n**Current Web Presence:**\\n[Quality assessment of current website/digital presence]\\n\\n**Technology Stack:**\\n[What platforms/tools they currently use if identifiable]\\n\\n**Recent News/Activity:**\\n[Any recent developments, growth signals, or changes]\\n\\n**Decision Maker Profile:**\\n[Likely decision makers and their priorities]\\n\\n**Relevance to Revaya:**\\n[Why they're a good fit for long-term partnership. Consider: Do they need ongoing support? Are they growth-focused? Would they benefit from continuity vs one-off projects?]\\n\\nKeep insights actionable and focused on sales intelligence.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a2a056f0-9579-45cb-bd22-d452fa611d4e",
+      "name": "Agent 1: Company Intelligence",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a B2B contact research specialist for Revaya.\\n\\nResearch the following contact and provide insights:\\n\\n**Contact Name:** {{ $json.first_name }} {{ $json.last_name }}\\n**Email:** {{ $json.email }}\\n**Company:** {{ $json.company_name }}\\n**Website:** {{ $json.website }}\\n\\nYour task:\\n1. Infer their role/title based on email domain and company\\n2. Assess their likely decision-making authority\\n3. Identify their probable priorities and pain points\\n4. Note communication style preferences\\n5. Find any public presence (LinkedIn would be ideal but you can't directly access it - make informed inferences)\\n\\nOutput format:\\n## Contact Research Brief\\n\\n**Likely Role:**\\n[Inferred job title and responsibilities]\\n\\n**Decision Authority:**\\n[Sole decision maker / Influencer / Must consult others]\\n\\n**Professional Background:**\\n[Likely experience level and expertise areas]\\n\\n**Key Priorities:**\\n[What they probably care about most in their role]\\n\\n**Probable Pain Points:**\\n[Common challenges for someone in this role at this company]\\n\\n**Communication Style:**\\n[Likely preferences - formal/casual, detail/big picture, etc.]\\n\\n**Best Approach:**\\n[How Shannon should position the conversation]\\n\\nBe specific and actionable. Use email domain and company context to make educated inferences.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "355530a5-1daf-4919-82fc-9001b5548087",
+      "name": "Agent 2: Contact Research",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        128
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a website analysis expert for Revaya.\\n\\nAnalyze the following website and provide actionable insights:\\n\\n**Website:** {{ $json.website }}\\n**Company:** {{ $json.company_name }}\\n**Their Interest:** {{ $json.interested_in }}\\n\\nYour task:\\n1. Evaluate current website quality and user experience\\n2. Identify technical strengths and weaknesses\\n3. Assess mobile responsiveness and performance\\n4. Identify missing features or opportunities\\n5. Note design trends and aesthetic appeal\\n6. Evaluate SEO and online visibility\\n\\nOutput format:\\n## Website Analysis\\n\\n**Overall Assessment:**\\n[1-2 sentence summary with quality score 1-10]\\n\\n**Strengths:**\\n- [List 2-3 positive aspects]\\n\\n**Weaknesses:**\\n- [List 2-4 issues or gaps]\\n\\n**Technical Observations:**\\n[Platform, performance, mobile-friendliness]\\n\\n**Design & UX:**\\n[Visual appeal, navigation, user experience]\\n\\n**SEO & Visibility:**\\n[Search presence, optimization level]\\n\\n**Opportunities for Revaya:**\\n[Specific improvements we could offer]\\n\\n**Talking Points for Discovery Call:**\\n[Key issues to discuss with the lead]\\n\\nBe constructive but honest. Focus on opportunities to add value.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "73e5547f-1e65-4ceb-8735-0b0bcc4124ce",
+      "name": "Agent 3: Website Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        240
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a competitive intelligence analyst for Revaya.\\n\\nAnalyze the competitive landscape for this company:\\n\\n**Company:** {{ $json.company_name }}\\n**Industry:** {{ $json.interested_in }}\\n**Website:** {{ $json.website }}\\n\\nYour task:\\n1. Identify their likely competitors\\n2. Assess how they differentiate (or don't)\\n3. Identify industry trends affecting them\\n4. Note what competitors are doing well online\\n5. Find gaps in their market positioning\\n\\nOutput format:\\n## Competitive Context\\n\\n**Primary Competitors:**\\n[List 2-3 direct competitors]\\n\\n**Competitive Positioning:**\\n[How they position vs competitors, unique angles]\\n\\n**Industry Trends:**\\n[Relevant trends affecting their market]\\n\\n**Competitor Digital Presence:**\\n[What competitors are doing well online]\\n\\n**Market Gaps & Opportunities:**\\n[Where they could improve positioning]\\n\\n**Revaya's Advantage:**\\n[How our partnership approach uniquely addresses their competitive challenges. Emphasize: We stay (vs build-and-leave), direct access to expert (vs agency layers), continuous evolution (vs static deliverables)]\\n\\nFocus on insights that help Shannon position our services competitively.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "ceddce09-83e8-45f2-bd86-c164550d5d81",
+      "name": "Agent 4: Competitive Context",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        368
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a sales discovery expert for Revaya.\\n\\nGenerate smart discovery questions for this lead:\\n\\n**Contact:** {{ $json.first_name }} {{ $json.last_name }}\\n**Company:** {{ $json.company_name }}\\n**Interest:** {{ $json.interested_in }}\\n**Additional Context:** {{ $json.additional_info }}\\n\\nYour task:\\nCreate 8-12 powerful discovery questions organized by category. Questions should:\\n- Uncover true needs and pain points\\n- Reveal budget and timeline\\n- Identify decision-making process\\n- Explore technical requirements\\n- Understand success criteria\\n- Assess readiness for ongoing partnership vs one-off project\\n\\nOutput format:\\n## Discovery Questions for Call\\n\\n**Current Situation:**\\n1. [Question about their current setup/challenges]\\n2. [Question about what prompted them to reach out now]\\n3. [Question about past attempts to solve this and what happened]\\n\\n**Goals & Objectives:**\\n4. [Question about their ideal outcome]\\n5. [Question about success metrics]\\n\\n**Decision Process:**\\n6. [Question about who else is involved]\\n7. [Question about timeline and urgency]\\n\\n**Budget & Investment:**\\n8. [Question about budget allocation]\\n9. [Question about ROI expectations]\\n\\n**Technical Requirements:**\\n10. [Question about integrations or specific needs]\\n11. [Question about current tools/platforms]\\n\\n**Partnership & Support:**\\n12. [Question about their expectations for ongoing support vs one-time delivery]\\n13. [Question about what's worked or not worked with past vendors/consultants]\\n\\nMake questions conversational and open-ended. Avoid yes/no questions. Focus on understanding the business context before proposing solutions.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "d1eec690-458f-4266-9ba7-769d9ef70b0c",
+      "name": "Agent 5: Discovery Questions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        512
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "agents_data",
+        "options": {}
+      },
+      "id": "8d543303-bf74-4de3-a6e5-7e17e3b94394",
+      "name": "Aggregate All Agents",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1tq4zDWDhcQy_rQyv9mnxKv5K0Ugy9uwcEVTElNkjoQA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "research_doc_url": "={{ $('Save Research Doc to Drive').item.json.webViewLink }}",
+            "pain_points": "={{ $('Webhook Trigger').item.json.body.pain_points || $('Webhook Trigger').item.json.body.additional_info || 'Not provided' }}",
+            "referred_by": "={{ $('Webhook Trigger').item.json.body.referred_by || 'Not specified' }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "93bd6160-e1fb-4829-9bbd-ada0b9e6f268",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yKxO16zhvAOalglU",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "email-subject",
+              "name": "email_subject",
+              "value": "=\ud83c\udfaf Pre-Call Research: {{ $('Webhook Trigger').item.json.body.company_name }}",
+              "type": "string"
+            },
+            {
+              "id": "email-body",
+              "name": "email_body",
+              "value": "=<h1>Pre-Call Research Summary</h1>\n\n<p><strong>Lead:</strong> {{ $('Webhook Trigger').item.json.body.first_name }} {{ $('Webhook Trigger').item.json.body.last_name }}<br>\n<strong>Company:</strong> {{ $('Webhook Trigger').item.json.body.company_name }}<br>\n<strong>Email:</strong> {{ $('Webhook Trigger').item.json.body.email }}<br>\n<strong>Phone:</strong> {{ $('Webhook Trigger').item.json.body.phone }}<br>\n<strong>Website:</strong> <a href=\"{{ $('Webhook Trigger').item.json.body.website }}\">{{ $('Webhook Trigger').item.json.body.website }}</a><br>\n<strong>Interested In:</strong> {{ $('Webhook Trigger').item.json.body.interested_in }}</p>\n\n<p><strong>Additional Context:</strong><br>\n{{ $('Webhook Trigger').item.json.body.additional_info }}</p>\n\n<hr>\n\n<h2>\ud83d\udcca Company Intelligence</h2>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Agent 1: Company Intelligence').item.json.candidates[0].content.parts[0].text }}</pre>\n\n<h2>\ud83d\udc64 Contact Research</h2>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Agent 2: Contact Research').item.json.candidates[0].content.parts[0].text }}</pre>\n\n<h2>\ud83c\udf10 Website Analysis</h2>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Agent 3: Website Analysis').item.json.candidates[0].content.parts[0].text }}</pre>\n\n<h2>\ud83c\udfc6 Competitive Context</h2>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Agent 4: Competitive Context').item.json.candidates[0].content.parts[0].text }}</pre>\n\n<h2>\u2753 Discovery Questions</h2>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Agent 5: Discovery Questions').item.json.candidates[0].content.parts[0].text }}</pre>\n\n<h2>\ud83d\udee1\ufe0f Anticipated Objections</h2>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Objection Handling Revaya').item.json.candidates[0].content.parts[0].text }}</pre>\n\n<hr>\n\n<p><strong>Research Generated:</strong> {{ $('Generate Lead ID').item.json.research_date }}<br>\n<strong>Lead ID:</strong> {{ $('Generate Lead ID').item.json.lead_id }}</p>\n\n<p><a href=\"https://docs.google.com/spreadsheets/d/1tq4zDWDhcQy_rQyv9mnxKv5K0Ugy9uwcEVTElNkjoQA/edit\" style=\"display:inline-block;padding:12px 24px;background:#0066cc;color:white;text-decoration:none;border-radius:4px;font-weight:bold;\">View in Google Sheets</a></p>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f44dd57a-ebf6-4c91-9b6c-67008bbb51ee",
+      "name": "Format Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "shannon@revaya.ai",
+        "subject": "={{ $json.email_subject }}",
+        "message": "={{ $json.email_body }}",
+        "options": {}
+      },
+      "id": "0edc6eec-5032-4886-9f00-cab531b8a82a",
+      "name": "Send Email to Shannon",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        304
+      ],
+      "webhookId": "f54c012c-43e8-4907-a783-c640e49115d3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5ACLVpREo42KWyZU",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"lead_id\": $('Generate Lead ID').item.json.lead_id, \"message\": \"Pre-call research completed successfully\" } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "bd95714a-2403-4915-8425-d0ce971d50a1",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1tq4zDWDhcQy_rQyv9mnxKv5K0Ugy9uwcEVTElNkjoQA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "email",
+              "lookupValue": "={{ $json.body.lead_email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18dda474-68c1-43e7-8f2b-cfa76bb0d0fb",
+      "name": "Lookup Lead in Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -576,
+        896
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yKxO16zhvAOalglU",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a solutions architect for Revaya.\\n\\n**Context from Pre-Call Research:**\\n\\nCompany Intelligence:\\n{{ $('Lookup Lead in Sheets').item.json.company_intelligence }}\\n\\nWebsite Analysis:\\n{{ $('Lookup Lead in Sheets').item.json.website_analysis }}\\n\\nCompetitive Context:\\n{{ $('Lookup Lead in Sheets').item.json.competitive_context }}\\n\\n**Discovery Call Information:**\\n\\n- Services Needed: {{ $('Webhook Trigger1').item.json.body.services_needed }}\\n- Pain Points: {{ $('Webhook Trigger1').item.json.body.pain_points }}\\n- Business Goals: {{ $('Webhook Trigger1').item.json.body.business_goals }}\\n- Budget Discussed: {{ $('Webhook Trigger1').item.json.body.budget_discussed }}\\n- Timeline Preference: {{ $('Webhook Trigger1').item.json.body.timeline_preference }}\\n- Call Notes: {{ $('Webhook Trigger1').item.json.body.call_notes }}\\n\\n**Revaya Services:**\\n- Website Design and Development (Wix, Shopify, Webflow, Squarespace, WordPress)\\n- E-commerce\\n- SEO Services\\n- Voice AI Agents\\n- Business Automation\\n- CRM Integration\\n\\nYour task:\\nDesign a comprehensive solution that addresses their pain points and achieves their business goals. Be specific about:\\n1. Recommended service package\\n2. Platform recommendations with justification\\n3. Key features and functionality\\n4. Integration requirements\\n5. Phases of implementation\\n6. Success metrics\\n7. Ongoing partnership opportunities (maintenance, optimization, future expansion)\\n\\nOutput format:\\n## Recommended Solution\\n\\n**Solution Overview:**\\n[2-3 sentence summary of the complete solution]\\n\\n**Service Package:**\\n[List specific services included]\\n\\n**Platform & Technology:**\\n[Recommended platform with justification]\\n\\n**Key Features:**\\n- [Feature 1 and why it matters]\\n- [Feature 2 and why it matters]\\n- [Feature 3 and why it matters]\\n- [Continue for all major features]\\n\\n**Integrations:**\\n[What systems need to connect and why]\\n\\n**Implementation Phases:**\\nPhase 1: [Description]\\nPhase 2: [Description]\\nPhase 3: [Description]\\n\\n**Success Metrics:**\\n[How we'll measure project success]\\n\\n**Why This Approach:**\\n[Strategic rationale for this solution design]\\n\\n**Partnership Roadmap:**\\n[How this initial project evolves into ongoing relationship. What optimization, maintenance, and expansion opportunities exist?]\\n\\nBe specific and technical. This will be used by the pricing calculator and timeline builder.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "235e18ae-ef20-4e75-aa3b-3016c1d91e80",
+      "name": "Agent 7: Solution Design",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -352,
+        896
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a pricing strategist for Revaya.\\n\\n**Solution Design (from previous agent):**\\n{{ $('Agent 7: Solution Design').item.json.candidates[0].content.parts[0].text }}\\n\\n**Budget Context:**\\n- Budget Discussed: {{ $('Webhook Trigger1').item.json.body.budget_discussed }}\\n- Budget Amount: {{ $('Webhook Trigger1').item.json.body.budget_amount }}\\n\\n**Revaya Pricing Structure:**\\n\\nSingle Page Websites:\\n- Base: $700\\n- Additional Page: $300\\n- Timeline: 1-2 weeks\\n\\nSmall Website Package:\\n- Base (5 pages): $1,999\\n- Additional Page: $300\\n- Blog Add-on: $500\\n- Training (per hour): $70\\n- Timeline: 2-3 weeks\\n\\nLarge Website Package:\\n- Base (15 pages): $3,999\\n- Additional Page: $200\\n- Blog Add-on: $400\\n- Training (per hour): $50\\n- Timeline: 4-6 weeks\\n\\nAdditional Services:\\n- SEO (monthly): $500-2,000\\n- Voice Agent Setup: $2,000-5,000\\n- Voice Agent (monthly): $200-500\\n- Automation (hourly): $150\\n\\nPayment Terms:\\n- Deposit: 50%\\n- Final Payment: 50%\\n- Proposal Valid: 14 days\\n\\nYour task:\\nCreate a detailed pricing breakdown that:\\n1. Aligns with the solution design\\n2. Respects the client's budget constraints\\n3. Clearly itemizes all components\\n4. Includes optional add-ons\\n5. Explains value for each line item\\n6. Offers payment flexibility if appropriate\\n\\nOutput format:\\n## Pricing Breakdown\\n\\n**Base Package: [Package Name]**\\n$X,XXX\\n[Description of what's included]\\n\\n**Core Deliverables:**\\n- Item 1: $XXX [What this includes]\\n- Item 2: $XXX [What this includes]\\n- Item 3: $XXX [What this includes]\\n\\n**Additional Features:**\\n- Feature 1: $XXX [Why this adds value]\\n- Feature 2: $XXX [Why this adds value]\\n\\n**Optional Add-Ons:**\\n- Add-on 1: $XXX [Benefits]\\n- Add-on 2: $XXX [Benefits]\\n\\n**Total Investment:**\\n- Base Package: $X,XXX\\n- Optional Add-ons: $X,XXX\\n- **Total: $X,XXX**\\n\\n**Payment Structure:**\\n- 50% Deposit: $X,XXX (due upon agreement)\\n- 50% Final: $X,XXX (due upon completion)\\n\\n**Value Justification:**\\n[Why this pricing represents excellent ROI]\\n\\n**Budget Alignment:**\\n[How this fits within their stated budget]\\n\\nBe transparent and confident. Show value, not just cost.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "cab354f1-6f0c-49dc-925b-8719f52b9bec",
+      "name": "Agent 8: Pricing Calculator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -128,
+        896
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a project management expert for Revaya.\\n\\n**Solution Design:**\\n{{ $('Agent 7: Solution Design').item.json.candidates[0].content.parts[0].text }}\\n\\n**Pricing Breakdown:**\\n{{ $('Agent 8: Pricing Calculator').item.json.candidates[0].content.parts[0].text }}\\n\\n**Client Preferences:**\\n- Timeline Preference: {{ $('Webhook Trigger1').item.json.body.timeline_preference }}\\n- Priority Level: {{ $('Webhook Trigger1').item.json.body.priority_level }}\\n\\nYour task:\\nCreate a realistic project timeline that:\\n1. Breaks down the implementation into phases\\n2. Includes milestones and deliverables\\n3. Specifies review/approval points\\n4. Accounts for dependencies\\n5. Aligns with client's timeline preference\\n6. Includes buffer time for revisions\\n\\nOutput format:\\n## Project Timeline\\n\\n**Total Duration:** [X weeks/months]\\n**Start Date:** [Upon contract signing]\\n**Estimated Completion:** [Date based on timeline]\\n\\n**Phase 1: Discovery & Planning** (Week 1)\\n- Kickoff meeting\\n- Requirements finalization\\n- Design mockups\\n- Technical architecture\\n- Deliverable: Approved design and project plan\\n\\n**Phase 2: Development** (Weeks 2-X)\\n- Core functionality build\\n- Content integration\\n- Feature implementation\\n- Deliverable: Functional website on staging\\n\\n**Phase 3: Review & Refinement** (Week X)\\n- Client review\\n- Feedback incorporation\\n- Content refinement\\n- QA testing\\n- Deliverable: Revised website ready for launch\\n\\n**Phase 4: Launch & Training** (Week X)\\n- Final approval\\n- Domain migration\\n- Go-live\\n- Team training\\n- Deliverable: Live website and training materials\\n\\n**Phase 5: Post-Launch Support** (Week X+1)\\n- Bug fixes\\n- Performance monitoring\\n- Client support\\n- Deliverable: Stable, optimized website\\n\\n**Key Milestones:**\\n- [Date]: [Milestone 1]\\n- [Date]: [Milestone 2]\\n- [Date]: [Milestone 3]\\n\\n**Dependencies:**\\n[What client needs to provide and when]\\n\\n**Timeline Alignment:**\\n[How this meets their stated timeline preference]\\n\\nBe realistic but optimistic. Account for client availability.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "d14686ea-7e14-4d28-829d-1d6238d2cb54",
+      "name": "Agent 9: Timeline Builder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        896
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are Shannon Winnicki, writing a personalized proposal for a potential client.\\n\\n**CLIENT INFORMATION:**\\n- Name: {{ $('Lookup Lead in Sheets').item.json.first_name }} {{ $('Lookup Lead in Sheets').item.json.last_name }}\\n- Company: {{ $('Lookup Lead in Sheets').item.json.company }}\\n- Email: {{ $('Lookup Lead in Sheets').item.json.email }}\\n\\n**PRE-CALL RESEARCH:**\\n\\nCompany Intelligence:\\n{{ $('Lookup Lead in Sheets').item.json.company_intelligence }}\\n\\nContact Research:\\n{{ $('Lookup Lead in Sheets').item.json.contact_research }}\\n\\nWebsite Analysis:\\n{{ $('Lookup Lead in Sheets').item.json.website_analysis }}\\n\\n**DISCOVERY CALL INSIGHTS:**\\n\\nPain Points:\\n{{ $('Webhook Trigger1').item.json.body.pain_points }}\\n\\nBusiness Goals:\\n{{ $('Webhook Trigger1').item.json.body.business_goals }}\\n\\nCall Notes:\\n{{ $('Webhook Trigger1').item.json.body.call_notes }}\\n\\n**SOLUTION COMPONENTS:**\\n\\nSolution Design:\\n{{ $('Agent 7: Solution Design').item.json.candidates[0].content.parts[0].text }}\\n\\nPricing:\\n{{ $('Agent 8: Pricing Calculator').item.json.candidates[0].content.parts[0].text }}\\n\\nTimeline:\\n{{ $('Agent 9: Timeline Builder').item.json.candidates[0].content.parts[0].text }}\\n\\nYour task:\\nWrite a comprehensive, personalized proposal that:\\n1. Opens with warm reference to your conversation\\n2. Demonstrates deep understanding of their situation\\n3. Clearly articulates their pain points\\n4. Presents the solution as the answer to their needs\\n5. Includes all technical details\\n6. Has transparent pricing\\n7. Shows realistic timeline\\n8. Addresses likely concerns proactively\\n9. Creates urgency without pressure\\n10. Makes next steps crystal clear\\n11. Positions this as the beginning of a partnership, not just a project\\n12. Emphasizes continuity and evolution\\n\\nTone: Warm but direct (Shannon's voice), confident but humble, partnership-focused not vendor-like. Use \"I\" not \"we\" - this is founder-led.\\n\\nOutput format:\\n# Proposal for {{ $('Lookup Lead in Sheets').item.json.company }}\\n\\n**Prepared for:** {{ $('Lookup Lead in Sheets').item.json.first_name }} {{ $('Lookup Lead in Sheets').item.json.last_name }}\\n**Prepared by:** Shannon Winnicki, Revaya\\n**Date:** [Today's date]\\n**Valid Until:** [14 days from today]\\n\\n---\\n\\n## Dear {{ $('Lookup Lead in Sheets').item.json.first_name }},\\n\\n[Opening paragraph referencing your call and their situation]\\n\\n[Express understanding of their challenges]\\n\\n## Understanding Your Situation\\n\\n[Restate their pain points and goals in your own words, showing deep understanding]\\n\\n## Our Recommended Solution\\n\\n[Present solution design in client-friendly language]\\n\\n## What's Included\\n\\n[Detailed deliverables and features]\\n\\n## Investment\\n\\n[Pricing breakdown with value justification]\\n\\n## Project Timeline\\n\\n[Timeline with phases and milestones]\\n\\n## Why Revaya\\n\\n[Shannon's relevant experience and expertise]\\n\\n[Key differentiator: \"We stay. We grow with you.\" - Explain the partnership model vs one-off projects]\\n\\n[Address: No agency layers, direct access to expert, continuity benefits]\\n\\n## Addressing Your Questions\\n\\n[Proactively address concerns raised in call]\\n\\n## Our Partnership Approach\\n\\n[Explain how this initial project is the foundation. Describe ongoing optimization, maintenance, and expansion as business evolves. No re-explaining business to new freelancers. One relationship that grows with them.]\\n\\n## Next Steps\\n\\n1. [Clear action step 1]\\n2. [Clear action step 2]\\n3. [Clear action step 3]\\n\\n## Ready to Get Started?\\n\\n[Compelling close with call to action]\\n\\n---\\n\\n**Shannon Winnicki**\\nFounder, Revaya\\nhello@revaya.com\\n(555) 123-4567\\nhttps://revaya.com\\n\\nThis proposal should feel like a natural continuation of Shannon's discovery call conversation.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "7c04ed9e-d101-408f-98d1-109cbdf1ef9b",
+      "name": "Agent 10: Proposal Writer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        304,
+        896
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1tq4zDWDhcQy_rQyv9mnxKv5K0Ugy9uwcEVTElNkjoQA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "call_date": "={{ $('Webhook Trigger1').item.json.body.call_date }}",
+            "call_notes": "={{ $('Webhook Trigger1').item.json.body.call_notes }}",
+            "budget_discussed": "={{ $('Webhook Trigger1').item.json.body.budget_discussed }}",
+            "budget_amount": "={{ $('Webhook Trigger1').item.json.body.budget_amount }}",
+            "timeline_preference": "={{ $('Webhook Trigger1').item.json.body.timeline_preference }}",
+            "services_needed": "={{ JSON.stringify($('Webhook Trigger1').item.json.body.services_needed) }}",
+            "pain_points": "={{ $('Webhook Trigger1').item.json.body.pain_points }}",
+            "business_goals": "={{ $('Webhook Trigger1').item.json.body.business_goals }}",
+            "priority_level": "={{ $('Webhook Trigger1').item.json.body.priority_level }}",
+            "proposal_generated_date": "={{ $now.toISO() }}",
+            "status": "Proposal Sent"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "58b47018-7145-410b-a31f-6ae8b2e9fdfe",
+      "name": "Update Sheets with Call Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        528,
+        896
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yKxO16zhvAOalglU",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "=Proposal - {{ $('Lookup Lead in Sheets').item.json.company }} - {{ $now.format('YYYY-MM-DD') }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "id": "a41c0cff-a035-4a4a-9fd1-c75626e14089",
+      "name": "Save Proposal to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        752,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1tq4zDWDhcQy_rQyv9mnxKv5K0Ugy9uwcEVTElNkjoQA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "proposal_url": "={{ $('Save Proposal to Google Drive').item.json.webViewLink }}"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "aacc85dd-338c-4deb-a5d5-16b5be5c4bfc",
+      "name": "Update Sheets with Proposal URL",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        896
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yKxO16zhvAOalglU",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "hello@revaya.com",
+        "subject": "=\u2705 Proposal Ready: {{ $('Lookup Lead in Sheets').item.json.company }}",
+        "message": "=<h1>Proposal Generated Successfully</h1>\n\n<p>The proposal for <strong>{{ $('Lookup Lead in Sheets').item.json.first_name }} {{ $('Lookup Lead in Sheets').item.json.last_name }}</strong> at <strong>{{ $('Lookup Lead in Sheets').item.json.company }}</strong> has been generated.</p>\n\n<p><strong>Priority Level:</strong> {{ $('Webhook Trigger1').item.json.body.priority_level }}</p>\n\n<p><a href=\"{{ $('Save Proposal to Google Drive').item.json.webViewLink }}\" style=\"display:inline-block;padding:12px 24px;background:#0066cc;color:white;text-decoration:none;border-radius:4px;font-weight:bold;\">View Proposal in Google Drive</a></p>\n\n<hr>\n\n<h2>Quick Summary</h2>\n<ul>\n  <li><strong>Services:</strong> {{ $('Webhook Trigger1').item.json.body.services_needed }}</li>\n  <li><strong>Budget:</strong> {{ $('Webhook Trigger1').item.json.body.budget_discussed }}</li>\n  <li><strong>Timeline:</strong> {{ $('Webhook Trigger1').item.json.body.timeline_preference }}</li>\n</ul>\n\n<hr>\n\n<p><strong>Action Required:</strong> Review proposal and send to lead when ready.</p>\n\n<hr>\n\n<h3>Call Notes</h3>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Webhook Trigger1').item.json.body.call_notes }}</pre>\n\n<h3>Pain Points Discussed</h3>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Webhook Trigger1').item.json.body.pain_points }}</pre>\n\n<h3>Business Goals</h3>\n<pre style=\"background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;\">{{ $('Webhook Trigger1').item.json.body.business_goals }}</pre>",
+        "options": {}
+      },
+      "id": "66beb25f-3095-4e6e-8259-7b44f865386a",
+      "name": "Email Shannon",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1184,
+        896
+      ],
+      "webhookId": "3b8dbafc-52d8-4a40-827e-aa4cee615b72",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5ACLVpREo42KWyZU",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "revaya-post-call",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "08dfc242-c1d3-452a-b36f-50e25dc4c4ca",
+      "name": "Webhook Trigger1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        896
+      ],
+      "webhookId": "winnicki-post-call"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"company\": $('Lookup Lead in Sheets').item.json.company, \"proposal_url\": $('Save Proposal to Google Drive').item.json.webViewLink, \"message\": \"Proposal generated successfully\" } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "4e6ed423-2dd0-4c31-8da9-538181653139",
+      "name": "Respond to Webhook1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1408,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyBycZecSHytgNdI6tM-EVeqMEBrEJ-m_Ls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a sales objection strategist for Revaya.\\n\\nAnticipate objections and prepare responses for this lead:\\n\\n**Company:** {{ $json.company_name }}\\n**Interest:** {{ $json.interested_in }}\\n**Context:** {{ $json.additional_info }}\\n\\nYour task:\\nIdentify 6-8 likely objections and provide strategic responses. Consider:\\n- Budget concerns\\n- Timeline pressures\\n- Technical complexity\\n- Competitive alternatives\\n- Preference for one-off projects vs ongoing partnership\\n- Internal resistance\\n- ROI uncertainty\\n- Concerns about vendor lock-in\\n\\nOutput format:\\n## Anticipated Objections & Responses\\n\\n**Objection 1: [Price/budget concern]**\\n*Strategic Response:* [How to reframe value vs cost, emphasize long-term ROI]\\n\\n**Objection 2: [\\\"I just need a one-off project\\\"]**\\n*Strategic Response:* [How to position partnership value: continuity, no re-explaining business, evolution over time]\\n\\n**Objection 3: [Timeline concern]**\\n*Strategic Response:* [How to address urgency and phasing while maintaining partnership approach]\\n\\n**Objection 4: [DIY or platform alternative]**\\n*Strategic Response:* [How to position expertise, strategic thinking vs just execution]\\n\\n**Objection 5: [Need to compare other vendors/agencies]**\\n*Strategic Response:* [How to differentiate Revaya: no layers, direct access, we stay vs build-and-leave]\\n\\n**Objection 6: [\\\"What if I don't need ongoing support?\\\"]**\\n*Strategic Response:* [How to explain evolution of tech needs, maintenance, optimization]\\n\\n**Objection 7: [Internal approval needed]**\\n*Strategic Response:* [How to facilitate buy-in and decision-making]\\n\\n**Objection 8: [Technical complexity or implementation concerns]**\\n*Strategic Response:* [How to address discovery process, phased implementation, ongoing support]\\n\\n**Proactive Strategies:**\\n[How to address objections before they arise]\\n\\nFocus on empathy, value demonstration, and positioning partnership benefits. Emphasize discovery-first approach and long-term relationship over quick sales.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "c553a9f3-2296-4ff8-bfd3-94e52b026567",
+      "name": "Objection Handling Revaya",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        672
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "research_html",
+              "name": "research_html",
+              "value": "=<!DOCTYPE html>\n<html>\n<head>\n    <style>\n        body {\n            font-family: 'Montserrat', sans-serif;\n            font-size: 12pt;\n            line-height: 1.6;\n            color: #333;\n            max-width: 800px;\n            margin: 0 auto;\n            padding: 20px;\n        }\n        h1 {\n            color: #3d3d99;\n            font-size: 24pt;\n            font-weight: 600;\n            border-bottom: 3px solid #61bdb4;\n            padding-bottom: 10px;\n            margin-bottom: 20px;\n        }\n        h2 {\n            color: #3d3d99;\n            font-size: 18pt;\n            font-weight: 600;\n            margin-top: 30px;\n            margin-bottom: 15px;\n        }\n        h3 {\n            color: #61bdb4;\n            font-size: 14pt;\n            font-weight: 600;\n            margin-top: 20px;\n            margin-bottom: 10px;\n        }\n        p {\n            margin-bottom: 12px;\n        }\n        .lead-info {\n            background: #f5f5f5;\n            padding: 15px;\n            border-left: 4px solid #61bdb4;\n            margin-bottom: 30px;\n        }\n        .section-content {\n            background: #fafafa;\n            padding: 15px;\n            border-radius: 5px;\n            margin-bottom: 20px;\n            white-space: pre-wrap;\n        }\n        hr {\n            border: none;\n            border-top: 2px solid #61bdb4;\n            margin: 30px 0;\n        }\n    </style>\n</head>\n<body>\n    <h1>Research Summary</h1>\n    \n    <div class=\"lead-info\">\n        <p><strong>Name:</strong> {{ $('Webhook Trigger').item.json.body.first_name }} {{ $('Webhook Trigger').item.json.body.last_name }}</p>\n        <p><strong>Company:</strong> {{ $('Webhook Trigger').item.json.body.company_name }}</p>\n        <p><strong>Email:</strong> {{ $('Webhook Trigger').item.json.body.email }}</p>\n        <p><strong>Phone:</strong> {{ $('Webhook Trigger').item.json.body.phone }}</p>\n        <p><strong>Website:</strong> <a href=\"{{ $('Webhook Trigger').item.json.body.website }}\">{{ $('Webhook Trigger').item.json.body.website }}</a></p>\n        <p><strong>Interested In:</strong> {{ $('Webhook Trigger').item.json.body.interested_in }}</p>\n        <p><strong>Top Pain Points:</strong> {{ $('Webhook Trigger').item.json.body.pain_points || $('Webhook Trigger').item.json.body.additional_info || 'Not provided' }}</p>\n        <p><strong>Referred By:</strong> {{ $('Webhook Trigger').item.json.body.referred_by || 'Not specified' }}</p>\n    </div>\n    \n    <hr>\n    \n    <h2>Company Intelligence</h2>\n    <div class=\"section-content\">{{ $('Agent 1: Company Intelligence').item.json.candidates[0].content.parts[0].text }}</div>\n    \n    <h2>Contact Research</h2>\n    <div class=\"section-content\">{{ $('Agent 2: Contact Research').item.json.candidates[0].content.parts[0].text }}</div>\n    \n    <h2>Website Analysis</h2>\n    <div class=\"section-content\">{{ $('Agent 3: Website Analysis').item.json.candidates[0].content.parts[0].text }}</div>\n    \n    <h2>Competitive Context</h2>\n    <div class=\"section-content\">{{ $('Agent 4: Competitive Context').item.json.candidates[0].content.parts[0].text }}</div>\n    \n    <h2>Discovery Questions</h2>\n    <div class=\"section-content\">{{ $('Agent 5: Discovery Questions').item.json.candidates[0].content.parts[0].text }}</div>\n    \n    <h2>Anticipated Objections</h2>\n    <div class=\"section-content\">{{ $('Objection Handling Revaya').item.json.candidates[0].content.parts[0].text }}</div>\n    \n    <hr>\n    \n    <p><strong>Research Generated:</strong> {{ $('Generate Lead ID').item.json.research_date }}<br>\n    <strong>Lead ID:</strong> {{ $('Generate Lead ID').item.json.lead_id }}</p>\n</body>\n</html>",
+              "type": "string"
+            },
+            {
+              "id": "doc_name",
+              "name": "doc_name",
+              "value": "=Research Summary - {{ $('Webhook Trigger').item.json.body.company_name }} - {{ $now.format('YYYY-MM-DD') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-research-html",
+      "name": "Format Research as HTML",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "jsonToBinary",
+        "convertAllData": false,
+        "sourceKey": "research_html",
+        "options": {
+          "fileName": "={{ $json.doc_name }}.html",
+          "mimeType": "text/html"
+        }
+      },
+      "id": "convert-html-binary",
+      "name": "Convert HTML to Binary",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "typeVersion": 1,
+      "position": [
+        448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $json.doc_name }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1iyhBxETUbze9hoj6YUFdrf8JuXdrf8JuXtq2Spf"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "doConversion": true,
+              "mimeType": "application/vnd.google-apps.document"
+            }
+          }
+        },
+        "binaryData": true,
+        "binaryPropertyName": "data"
+      },
+      "id": "upload-research-doc",
+      "name": "Save Research Doc to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        560,
+        304
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "placeholder",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate Lead ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Lead ID": {
+      "main": [
+        [
+          {
+            "node": "Agent 1: Company Intelligence",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Agent 2: Contact Research",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Agent 3: Website Analysis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Agent 4: Competitive Context",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Agent 5: Discovery Questions",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Objection Handling Revaya",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 1: Company Intelligence": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 2: Contact Research": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 3: Website Analysis": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 4: Competitive Context": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 5: Discovery Questions": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate All Agents": {
+      "main": [
+        [
+          {
+            "node": "Format Research as HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Format Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email to Shannon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email to Shannon": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Lead in Sheets": {
+      "main": [
+        [
+          {
+            "node": "Agent 7: Solution Design",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 7: Solution Design": {
+      "main": [
+        [
+          {
+            "node": "Agent 8: Pricing Calculator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 8: Pricing Calculator": {
+      "main": [
+        [
+          {
+            "node": "Agent 9: Timeline Builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 9: Timeline Builder": {
+      "main": [
+        [
+          {
+            "node": "Agent 10: Proposal Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent 10: Proposal Writer": {
+      "main": [
+        [
+          {
+            "node": "Update Sheets with Call Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheets with Call Data": {
+      "main": [
+        [
+          {
+            "node": "Save Proposal to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Proposal to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Update Sheets with Proposal URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheets with Proposal URL": {
+      "main": [
+        [
+          {
+            "node": "Email Shannon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Shannon": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Lookup Lead in Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Objection Handling Revaya": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Research as HTML": {
+      "main": [
+        [
+          {
+            "node": "Convert HTML to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert HTML to Binary": {
+      "main": [
+        [
+          {
+            "node": "Save Research Doc to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Research Doc to Drive": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "33fa6c6e-9043-4ec4-bcd2-49348e03eb79",
+  "meta": {
+    "instanceId": "338952c45bdd8aaf8c0b25526cc197b37d8d87201c909bdb3f3fdd9fe784f038"
+  },
+  "id": "3cU0UK9UsHgwgTR7",
+  "tags": []
+}
