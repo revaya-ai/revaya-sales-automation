@@ -45,12 +45,12 @@ Connect these services in n8n:
 ### 4. Update Settings
 - **Google Drive Folder ID**: Update to your research folder
 - **Google Sheets Document ID**: Update to your leads spreadsheet
-- **Email Address**: Verify it's set to `hello@revaya.com`
+- **Email Address**: Verify it's set to `hello@company.com`
 
 ### 5. Set Up Your Form
 Configure your contact form to POST to:
 ```
-https://[your-n8n-domain]/webhook/revaya-lead-intake
+https://[your-n8n-domain]/webhook/company-lead-intake
 ```
 
 With these fields:
@@ -228,4 +228,4 @@ Proprietary - Revaya Internal Use Only
 - Enhanced partnership positioning
 - Updated service offerings
 
-**Last Updated:** November 29, 2024
+**Last Updated:** November 29, 2025
